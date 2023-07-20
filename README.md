@@ -13,7 +13,9 @@ For help getting started with Flutter development, view the
 [online documentation](https://flutter.dev/docs), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
-# quantupi
+# quantupi_fork
+
+This is a fork repo of quantupi to support upi payment request url's through to intent.
 
 ## [![version](https://img.shields.io/pub/v/quantupi)](https://pub.dev/packages/quantupi)
 
