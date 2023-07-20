@@ -1,0 +1,22 @@
+PODS:
+  - Flutter (1.0.0)
+  - quantupi (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - quantupi (from `.symlinks/plugins/quantupi/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  quantupi:
+    :path: ".symlinks/plugins/quantupi/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
+  quantupi: a6e62bb87a5fc7c64e32fbd9da052ef626807142
+
+PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
+
+COCOAPODS: 1.11.3
