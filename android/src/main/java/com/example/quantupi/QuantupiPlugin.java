@@ -57,28 +57,30 @@ public class QuantupiPlugin implements FlutterPlugin, MethodCallHandler, PluginR
     // On receiving the response.
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(uniqueRequestCode == requestCode){
-            if (Activity.RESULT_OK == resultCode && finalResult != null) {
-                if (data != null) {
-                    try {
-                        String response =data.getStringExtra("response");
-                        Log.d("UPI", "onActivityResult: response" + response);
+        if (uniqueRequestCode != requestCode) {
+            return false;
+        }
 
-                        if (!exception) finalResult.success(response);
-                    } catch (Exception ex) {
-                        Log.d("Exception: ", ex.toString());
-                        if (!exception) finalResult.success(ex.toString());
-                    }
-                } else {
-                    /// Failed to receive any response from the invoked activity.
-                    Log.d("NOTE: ", "Received data is null");
-                    if (!exception) finalResult.success("no data received");
+        if (resultCode == Activity.RESULT_CANCELED) {
+            // User cancelled the transaction.
+            Log.d("NOTE: ", "Received NULL, User cancelled the transaction.");
+            finalResult.success("User cancelled the transaction");
+        }
+
+        if (resultCode == Activity.RESULT_OK && finalResult != null) {
+            if(data != null) {
+                try {
+                    String response = data.getStringExtra("response");
+                    Log.d("UPI", "onActivityResult: response " + response);
+                    finalResult.success(response);
+                } catch (Exception ex) {
+                    Log.d("Exception: ", ex.toString());
+                    finalResult.success(ex.toString());
                 }
-            }
-            if(Activity.RESULT_CANCELED == resultCode){
-                /// User cancelled the transaction.
-                Log.d("NOTE: ", "Received NULL, User cancelled the transaction.");
-                finalResult.success(" User cancelled the transaction");
+            } else {
+                // Failed to receive any response from the invoked activity.
+                Log.d("NOTE: ", "Received data is null");
+                finalResult.success("no data received");
             }
         }
 
