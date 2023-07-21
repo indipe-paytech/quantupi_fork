@@ -21,7 +21,6 @@ public class QuantupiPlugin implements FlutterPlugin, MethodCallHandler, PluginR
 
     int uniqueRequestCode = 3498;
     MethodChannel.Result finalResult;
-    boolean exception = false;
     Activity activity;
 
     @Override
@@ -36,13 +35,11 @@ public class QuantupiPlugin implements FlutterPlugin, MethodCallHandler, PluginR
             finalResult = result;
             String url = call.argument("url");
             try {
-                exception = false;
                 Uri uri = Uri.parse(url);
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(uri);
                 activity.startActivityForResult(intent, uniqueRequestCode);
             } catch (Exception ex) {
-                exception = true;
                 result.error("FAILED", "invalid_parameters", null);
             }
         } else {
