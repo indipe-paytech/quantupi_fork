@@ -4,13 +4,18 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 
 class Quantupi {
-  static const MethodChannel _channel = MethodChannel('quantupi');
+  Quantupi({required this.url}) {
+    _channel.setMethodCallHandler(_fromNative);
+  }
+  static const _channel = MethodChannel('quantupi');
 
   final String url;
 
-  Quantupi({
-    required this.url,
-  });
+  Future<void> _fromNative(MethodCall call) async {
+    if (call.method == 'callTestResuls') {
+      print('callTest result = ${call.arguments}');
+    }
+  }
 
   Future<String> startTransaction() async {
     try {

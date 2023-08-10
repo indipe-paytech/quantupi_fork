@@ -54,7 +54,7 @@ public class QuantupiPlugin implements FlutterPlugin, MethodCallHandler, PluginR
     // On receiving the response.
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (uniqueRequestCode != requestCode) {
+        if (uniqueRequestCode != requestCode || finalResult == null) {
             return false;
         }
 
@@ -62,10 +62,8 @@ public class QuantupiPlugin implements FlutterPlugin, MethodCallHandler, PluginR
             // User cancelled the transaction.
             Log.d("NOTE: ", "Received NULL, User cancelled the transaction.");
             finalResult.success("User cancelled the transaction");
-        }
-
-        if (resultCode == Activity.RESULT_OK && finalResult != null) {
-            if(data != null) {
+        } else if (resultCode == Activity.RESULT_OK) {
+            if (data != null) {
                 try {
                     String response = data.getStringExtra("response");
                     Log.d("UPI", "onActivityResult: response " + response);
@@ -81,6 +79,8 @@ public class QuantupiPlugin implements FlutterPlugin, MethodCallHandler, PluginR
             }
         }
 
+        // Set finalResult to null to prevent accidental multiple completions
+        finalResult = null;
         return true;
     }
 
