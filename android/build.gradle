@@ -1,4 +1,4 @@
-group 'com.example.quant_upi'
+group 'com.example.quantupi'
 version '1.0-SNAPSHOT'
 
 buildscript {
@@ -26,7 +26,7 @@ apply plugin: 'kotlin-android'
 
 android {
     if (project.android.hasProperty("namespace")) {
-        namespace 'com.example.quant_upi'
+        namespace 'com.example.quantupi'
     }
 
     compileSdkVersion 33
