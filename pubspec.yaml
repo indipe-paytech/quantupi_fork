@@ -5,8 +5,8 @@ homepage: https://github.com/quantbugtechnology/quantpay.git
 repository: https://github.com/quantbugtechnology/quantpay.git
 
 environment:
-  sdk: '>=3.1.2 <4.0.0'
-  flutter: '>=3.3.0'
+  sdk: '>=3.0.6 <4.0.0'
+  flutter: '>=3.10.6'
 
 dependencies:
   flutter:
