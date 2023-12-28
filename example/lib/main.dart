@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart'';
+import 'package:flutter/material.dart';
 import 'package:quantupi/quantupi.dart';
 import 'package:quantupi/quantupi_payment_apps.dart';
 
