@@ -4,7 +4,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:quantupi/quantupi.dart';
 import 'package:quantupi/quantupi_payment_apps.dart';
-import 'package:quantupi/upi_app_model.dart';
+import 'package:quantupi/upi_app_metadata.dart';
+import 'package:quantupi/upi_applications.dart';
 
 void main() => runApp(const MyApp());
 
@@ -20,22 +21,27 @@ class _MyAppState extends State<MyApp> {
 
   String appname = paymentappoptions[0];
   late Quantupi upi;
-
+  List<String>? packNames = [
+    UpiApplication.bhim.androidPackageName,
+    UpiApplication.phonePe.androidPackageName,
+    UpiApplication.paytm.androidPackageName,
+    UpiApplication.phonePeSimulator.androidPackageName,
+  ];
   @override
   void initState() {
-    upi= Quantupi();
+    upi = Quantupi();
     // getApps();
     super.initState();
   }
 
-  getApps()async{
-    await upi.getUpiApps();
+  getApps() async {
+
+    await upi.getFilteredUpiApps(packNames);
   }
 
   Future<String> initiateTransaction(String? upiApp) async {
-
-    String response = await upi.startTransaction(
-       upiApp!,'upi://pay?pa=kawaldeepsingh25@oksbi&pn=Kawaldeep%20Singh&cu=INR&am=1&tn=testMoney');
+    String response = await upi.startTransaction(upiApp!,
+        'upi://pay?pa=kawaldeepsingh25@oksbi&pn=Kawaldeep%20Singh&cu=INR&am=1&tn=testMoney');
 
     return response;
   }
@@ -85,53 +91,58 @@ class _MyAppState extends State<MyApp> {
                   }).toList(),
                 ),
               if (isios) const SizedBox(height: 20),
-              Expanded(child: FutureBuilder<List<UpiApp>>(
-                  future: upi.getUpiApps(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return GridView.builder(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 8.0,
-                          mainAxisSpacing: 8.0,
-                        ),
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () async{
-                             await initiateTransaction(snapshot.data![index].app);
-                            },
-                            child: Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Image.memory(
-                                      snapshot.data![index].icon!,
-                                      width: 40,
-                                      height: 40,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      snapshot.data![index].name!,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
+              Expanded(
+                child: FutureBuilder<List<UpiAppMetaData>>(
+                    future: upi.getFilteredUpiApps(packNames),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 8.0,
+                            mainAxisSpacing: 8.0,
+                          ),
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              onTap: () async {
+                                await initiateTransaction(
+                                    snapshot.data![index].app);
+                              },
+                              child: Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Image.memory(
+                                        snapshot.data![index].icon!,
+                                        width: 40,
+                                        height: 40,
                                       ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        snapshot.data![index].name!,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      );
-                    }
-                    return Container();
-                  }),),
+                            );
+                          },
+                        );
+                      }
+                      return Container();
+                    }),
+              ),
               // ElevatedButton(
               //   onPressed: () async {
               //     // String value = await initiateTransaction(

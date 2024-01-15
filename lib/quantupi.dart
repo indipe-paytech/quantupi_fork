@@ -4,7 +4,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
-import 'upi_app_model.dart';
+import 'upi_app_metadata.dart';
+import 'upi_applications.dart';
 /// TODO: move to platform channel interface
 class Quantupi {
   Quantupi() {
@@ -50,58 +51,26 @@ class Quantupi {
     }
   }
 
-  Future<List<UpiApp>> getUpiApps() async {
-    List<UpiApp>? upiList =
-    await getAllUpiApps();
+  Future<List<UpiAppMetaData>> getFilteredUpiApps(List<String>? listPackageNames) async {
+    List<UpiAppMetaData>? upiList =
+    await _getAllUpiApps();
+
     if (upiList.isNotEmpty) {
       return upiList;
     }
     return [];
   }
 
-  Future<List<UpiApp>> getAllUpiApps() async {
+  Future<List<UpiAppMetaData>> _getAllUpiApps(List<String>? listPackageNames) async {
     final List<Map>? apps = await _channel.invokeListMethod<Map>('getInstalledUpiApps');
-    List<UpiApp> upiIndiaApps = [];
-    apps?.forEach((Map app) {
-      var icon= app['icon'];
-      if (app['packageName'] == "in.org.npci.upiapp" ||
-          app['packageName'] == "com.phonepe.app" ||
-          app['packageName'] == "net.one97.paytm" ||
-          app['packageName'] == "com.phonepe.simulator"
+    List<UpiAppMetaData> upiIndiaApps = [];
 
-      ///Coming soon
-      ///app['packageName'] == "com.google.android.apps.nbu.paisa.user"
-      ///app['packageName'] == "in.amazon.mShop.android.shopping"
-      // app['packageName'] == "com.freecharge.android" ||
-      // app['packageName'] == "com.axis.mobile" ||
-      // app['packageName'] == "com.infrasofttech.centralbankupi" ||
-      // app['packageName'] == "com.infra.boiupi" ||
-      // app['packageName'] == "com.lcode.corpupi" ||
-      // app['packageName'] == "com.lcode.csbupi" ||
-      // app['packageName'] == "com.dbs.in.digitalbank" ||
-      // app['packageName'] == "com.equitasbank.upi" ||
-      // app['packageName'] == "com.mgs.hsbcupi" ||
-      // app['packageName'] == "com.csam.icici.bank.imobile" ||
-      // app['packageName'] == "com.lcode.smartz" ||
-      // app['packageName'] == "com.mgs.induspsp" ||
-      // app['packageName'] == "com.msf.kbank.mobile" ||
-      // app['packageName'] == "com.hdfcbank.payzapp" ||
-      // app['packageName'] == "com.Version1" ||
-      // app['packageName'] == "com.psb.omniretail" ||
-      // app['packageName'] == "com.rblbank.mobank" ||
-      // app['packageName'] == "com.lcode.ucoupi" ||
-      // app['packageName'] == "com.ultracash.payment.customer" ||
-      // app['packageName'] == "com.YesBank" ||
-      // app['packageName'] == "com.bankofbaroda.upi" ||
-      // app['packageName'] == "com.myairtelapp" ||
-      // app['packageName'] == "com.dreamplug.androidapp" ||
-      // app['packageName'] == "com.sbi.upi"
-      ) {
-        // || app['packageName']== "com.whatsapp"
-        // || app['packageName']== "com.whatsapp.w4b") {
-        upiIndiaApps.add(UpiApp.fromMap(Map<String, dynamic>.from(app)));
+    apps?.forEach((Map app) {
+      if (listPackageNames?.contains(app['packageName']) ?? false) {
+        upiIndiaApps.add(UpiAppMetaData.fromMap(Map<String, dynamic>.from(app)));
       }
     });
+
     return upiIndiaApps;
   }
 
