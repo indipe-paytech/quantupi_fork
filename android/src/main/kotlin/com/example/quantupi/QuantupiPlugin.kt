@@ -27,8 +27,6 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
   private var uniqueRequestCode = 3498
   private var finalResult: MethodChannel.Result? = null
   private var activity: Activity? = null
-  private var hasResponded = false
-  private var exception = false
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPluginBinding) {
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "quantupi")
@@ -36,8 +34,6 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
   }
 
   override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-//    hasResponded = false
-//    this.result = result
     finalResult = result
     when (call.method) {
       "startTransaction" -> startUpiTransaction(result, call)
@@ -50,41 +46,27 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
     result: MethodChannel.Result,
     call: MethodCall,
   ) {
-    val url = call.argument<String>("url")
-    val app: String? = call.argument("app")
-
-    /// Check if url is valid upi url
-//    if (url == null || !url.startsWith("upi://")) {
-//      result.error("FAILED", "invalid_parameters", null)
-//      return
-//    }
-
     try {
-      /// Storing result like this is a bad idea since this can cause issues in case of multiple
-      // transactions involving multiple UPI Apps, however in practice this is unlikely to happen.
+
       finalResult = result
-      exception = false
+      val url = call.argument<String>("url")
+      val app: String? = call.argument("app")
+
+      if (activity == null) {
+        result.error("FAILED", "Activity is null", null)
+        return
+      }
+
       val intent = createUpiIntent(url,app)
       val packageManager: PackageManager = activity!!.packageManager
       if (intent.resolveActivity(packageManager) == null) {
         result.error("FAILED", "No UPI Apps found", null)
         return
       }
-//      if (packageManager?.let { intent.resolveActivity(it) } == null) {
-//        success("activity_unavailable")
-//        return
-//      }
 
       activity!!.startActivityForResult(intent, uniqueRequestCode)
     } catch (ex: Exception) {
-//      Log.e("quant_upi", ex.toString())
-//      success("failed_to_open_app")
-
-//      var msg=ex.message
-//      result.success("${msg}")
-      exception = true
-
-      result.error("FAILED", "invalid_parameters", null)
+      result.error("FAILED", "Error starting UPI transaction", ex.toString())
     }
   }
 
@@ -92,30 +74,27 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
     val uri = Uri.parse(url)
     val intent = Intent(Intent.ACTION_VIEW)
     intent.data = uri
-    intent.setPackage(app)
+    // Check if app is provided before setting the package
+    if (!app.isNullOrBlank()) {
+      intent.setPackage(app)
+    }
+
     return intent
   }
 
   private fun getInstalledUpiApps(result: MethodChannel.Result) {
     val packages: MutableList<Map<String, Any>> = ArrayList()
     val intent = Intent(Intent.ACTION_VIEW)
-    Log.d("quantupi_fork", "getInstalledUpiApps")
     val uriBuilder = Uri.Builder()
     uriBuilder.scheme("upi").authority("pay")
-//    uriBuilder.appendQueryParameter("pa", "test@ybl")
-//    uriBuilder.appendQueryParameter("pn", "Test")
-//    uriBuilder.appendQueryParameter("tn", "Get All Apps")
-//    uriBuilder.appendQueryParameter("am", "1.0")
-//    uriBuilder.appendQueryParameter("cr", "INR")
     val uri = uriBuilder.build()
     intent.data = uri
     val packageManager = activity!!.packageManager
-    val resolveInfoList:List<ResolveInfo>
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      resolveInfoList = packageManager
+    val resolveInfoList:List<ResolveInfo> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      packageManager
               .queryIntentActivities(intent, PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong()))
     }else{
-      resolveInfoList = packageManager
+      packageManager
               .queryIntentActivities(intent, 0);
     }
 
@@ -164,38 +143,26 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
         // Add this app info to the list.
         packages.add(m)
 
-      } catch (e: Exception) {
-        e.printStackTrace()
-        Log.e("quant_upi", e.toString())
-        result.error("getInstalledUpiApps", "exception", e)
+      } catch (ex: Exception) {
+        Log.d("quant_upi", ex.toString())
+        result.error("getInstalledUpiApps", "exception", ex)
       }
     }
 
     result.success(packages)
   }
-  private fun encodeToBase64(image: Bitmap): String? {
-    val byteArrayOS = ByteArrayOutputStream()
-    image.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOS)
-    return Base64.encodeToString(byteArrayOS.toByteArray(), Base64.NO_WRAP)
-  }
+
   // It converts the Drawable to Bitmap. There are other inbuilt methods too.
   private fun getBitmapFromDrawable(drawable: Drawable): Bitmap {
     val bmp: Bitmap = Bitmap.createBitmap(
-            drawable.intrinsicWidth,
-            drawable.intrinsicHeight,
+            drawable.intrinsicWidth.coerceAtLeast(1),
+            drawable.intrinsicHeight.coerceAtLeast(1),
             Bitmap.Config.ARGB_8888
     )
     val canvas = Canvas(bmp)
     drawable.setBounds(0, 0, canvas.width, canvas.height)
     drawable.draw(canvas)
     return bmp
-  }
-
-  private fun success(o: String) {
-    if (!hasResponded) {
-      hasResponded = true
-      finalResult?.success(o)
-    }
   }
 
   override fun onDetachedFromEngine(binding: FlutterPluginBinding) {
@@ -257,9 +224,6 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
     binding.addActivityResultListener(this)
   }
 
-//  override fun onDetachedFromActivityForConfigChanges() {}
-//  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {}
-//  override fun onDetachedFromActivity() {}
   override fun onDetachedFromActivityForConfigChanges() {
     activity = null;
   }
