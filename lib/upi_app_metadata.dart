@@ -13,7 +13,7 @@ class UpiAppMetaData {
   /// This is the icon of the UPI app. Pass it in [Image.memory()] to display the icon.
   Uint8List? icon;
 
-  UpiApp.fromMap(Map<String, dynamic> m) {
+  UpiAppMetaData.fromMap(Map<String, dynamic> m) {
     app = m['packageName'];
     name = m['name'];
     icon = m['icon'] != null ? base64.decode(m['icon']!) : null;
@@ -22,7 +22,7 @@ class UpiAppMetaData {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is UpiApp && runtimeType == other.runtimeType && app == other.app;
+      other is UpiAppMetaData && runtimeType == other.runtimeType && app == other.app;
 
   @override
   int get hashCode => app.hashCode;
