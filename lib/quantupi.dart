@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter/services.dart';
 import 'upi_app_metadata.dart';
-import 'upi_applications.dart';
+import 'upi_app_bundle.dart';
 /// TODO: move to platform channel interface
 class Quantupi {
   Quantupi() {

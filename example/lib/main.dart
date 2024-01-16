@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:quantupi/quantupi.dart';
 import 'package:quantupi/quantupi_payment_apps.dart';
 import 'package:quantupi/upi_app_metadata.dart';
-import 'package:quantupi/upi_applications.dart';
+import 'package:quantupi/upi_app_bundle.dart';
 
 void main() => runApp(const MyApp());
 
@@ -22,10 +22,10 @@ class _MyAppState extends State<MyApp> {
   String appname = paymentappoptions[0];
   late Quantupi upi;
   List<String>? packNames = [
-    UpiApplication.bhim.androidPackageName,
-    UpiApplication.phonePe.androidPackageName,
-    UpiApplication.paytm.androidPackageName,
-    UpiApplication.phonePeSimulator.androidPackageName,
+    UpiAppBundle.bhim.androidPackageName,
+    UpiAppBundle.phonePe.androidPackageName,
+    UpiAppBundle.paytm.androidPackageName,
+    UpiAppBundle.phonePeSimulator.androidPackageName,
   ];
   @override
   void initState() {
@@ -35,7 +35,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   getApps() async {
-
     await upi.getFilteredUpiApps(packNames);
   }
 

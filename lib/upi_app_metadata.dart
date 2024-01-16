@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'dart:convert';
 
-/// This is the model class of apps returned by [getAllUpiApps()].
+/// This is the model class of apps returned by [_getAllUpiApps()].
 /// This class contains some predefined package names of UPI apps.
 class UpiAppMetaData {
   /// app is the package name of the app. Pass this in [app] argument of [startTransaction]
