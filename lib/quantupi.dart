@@ -53,7 +53,7 @@ class Quantupi {
 
   Future<List<UpiAppMetaData>> getFilteredUpiApps(List<String>? listPackageNames) async {
     List<UpiAppMetaData>? upiList =
-    await _getAllUpiApps();
+    await _getAllUpiApps(listPackageNames);
 
     if (upiList.isNotEmpty) {
       return upiList;
