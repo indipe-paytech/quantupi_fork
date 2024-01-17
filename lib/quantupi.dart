@@ -41,12 +41,9 @@ class Quantupi {
             ? "Successfully Launched App!"
             : "Something went wrong!";
       } else {
-        throw UpiException.fromException(
-          PlatformException(
-            code: "error",
-            details: 'Platform not supported!',
-            message: 'Platform not supported!',
-          ),
+        throw PlatformException(
+          code: 'ERROR',
+          message: 'Platform not supported!',
         );
       }
     } catch (error) {

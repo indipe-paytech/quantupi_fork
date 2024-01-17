@@ -2,11 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:quantupi/exception_old.dart';
 import 'package:quantupi/quantupi.dart';
 import 'package:quantupi/quantupi_payment_apps.dart';
 import 'package:quantupi/upi_app_metadata.dart';
 import 'package:quantupi/upi_app_bundle.dart';
+import 'package:quantupi/upi_exception.dart';
 
 void main() => runApp(const MyApp());
 
