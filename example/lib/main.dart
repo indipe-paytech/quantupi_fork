@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:quantupi/exception_old.dart';
 import 'package:quantupi/quantupi.dart';
 import 'package:quantupi/quantupi_payment_apps.dart';
 import 'package:quantupi/upi_app_metadata.dart';
@@ -35,7 +36,11 @@ class _MyAppState extends State<MyApp> {
   }
 
   getApps() async {
-    await upi.getFilteredUpiApps(packNames);
+    try {
+      await upi.getFilteredUpiApps(packNames);
+    } catch (err) {
+      print('err is $err');
+    }
   }
 
   Future<String> initiateTransaction(String? upiApp) async {
@@ -138,6 +143,18 @@ class _MyAppState extends State<MyApp> {
                             );
                           },
                         );
+                      }
+                      if (snapshot.hasError) {
+                        // Handle errors
+                        if (snapshot.error is UpiException) {
+                          // Display a specific message for NoFilteredUpiAppsException
+                          return Text(
+                              (snapshot.error as UpiException).message!);
+                        } else {
+                          // Display a generic error message for other exceptions
+                          return Text(
+                              'An unexpected error occurred: ${snapshot.error}');
+                        }
                       }
                       return Container();
                     }),

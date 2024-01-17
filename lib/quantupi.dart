@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'upi_app_metadata.dart';
 import 'upi_app_bundle.dart';
+import 'upi_exception.dart';
+
 /// TODO: move to platform channel interface
 class Quantupi {
   Quantupi() {
@@ -19,8 +21,10 @@ class Quantupi {
     }
   }
 
-  Future<String> startTransaction( String packageName,
-       String url,) async {
+  Future<String> startTransaction(
+    String packageName,
+    String url,
+  ) async {
     try {
       if (Platform.isAndroid) {
         final String response = await _channel
@@ -37,9 +41,12 @@ class Quantupi {
             ? "Successfully Launched App!"
             : "Something went wrong!";
       } else {
-        throw PlatformException(
-          code: 'ERROR',
-          message: 'Platform not supported!',
+        throw UpiException.fromException(
+          PlatformException(
+            code: "error",
+            details: 'Platform not supported!',
+            message: 'Platform not supported!',
+          ),
         );
       }
     } catch (error) {
@@ -51,23 +58,41 @@ class Quantupi {
     }
   }
 
-  Future<List<UpiAppMetaData>> getFilteredUpiApps(List<String>? listPackageNames) async {
-    List<UpiAppMetaData>? upiList =
-    await _getAllUpiApps(listPackageNames);
+  Future<List<UpiAppMetaData>> getFilteredUpiApps(
+      List<String>? listPackageNames) async {
+    List<UpiAppMetaData>? upiList = await _getAllUpiApps(listPackageNames);
 
     if (upiList.isNotEmpty) {
       return upiList;
+    } else {
+      throw UpiException.fromException(PlatformException(
+        code: "noFilteredAppFound",
+        message: "No supported UPI apps found.",
+        details: "No supported UPI apps found in th device.",
+      ));
     }
     return [];
   }
 
-  Future<List<UpiAppMetaData>> _getAllUpiApps(List<String>? listPackageNames) async {
-    final List<Map>? apps = await _channel.invokeListMethod<Map>('getInstalledUpiApps');
+  Future<List<UpiAppMetaData>> _getAllUpiApps(
+      List<String>? listPackageNames) async {
+    final List<Map>? apps =
+        await _channel.invokeListMethod<Map>('getInstalledUpiApps');
     List<UpiAppMetaData> upiIndiaApps = [];
+    // print('object')
+
+    if (apps != null && apps.isEmpty) {
+      throw UpiException.fromException(PlatformException(
+        code: "noUpiAppFound",
+        message: "No UPI apps found.",
+        details: "No UPI payment supported apps found in th device.",
+      ));
+    }
 
     apps?.forEach((Map app) {
       if (listPackageNames?.contains(app['packageName']) ?? false) {
-        upiIndiaApps.add(UpiAppMetaData.fromMap(Map<String, dynamic>.from(app)));
+        upiIndiaApps
+            .add(UpiAppMetaData.fromMap(Map<String, dynamic>.from(app)));
       }
     });
 
