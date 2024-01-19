@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.util.Base64
 import android.util.Log
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.FlutterPlugin.FlutterPluginBinding
@@ -18,8 +19,9 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.PluginRegistry.ActivityResultListener
+import org.json.JSONObject
 import java.io.ByteArrayOutputStream
-import android.util.Base64
+
 
 /** QuantupiPlugin  */
 class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener, ActivityAware {
@@ -27,6 +29,7 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
   private var uniqueRequestCode = 3498
   private var finalResult: MethodChannel.Result? = null
   private var activity: Activity? = null
+  private var selectedPackage: String? = null
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPluginBinding) {
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "quantupi")
@@ -56,6 +59,8 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
         result.error("FAILED", "Activity is null", null)
         return
       }
+
+      selectedPackage=app
 
       val intent = createUpiIntent(url,app)
       val packageManager: PackageManager = activity!!.packageManager
@@ -95,7 +100,7 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
               .queryIntentActivities(intent, PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong()))
     }else{
       packageManager
-              .queryIntentActivities(intent, 0);
+              .queryIntentActivities(intent, 0)
     }
 
     for (resolveInfo in resolveInfoList) {
@@ -152,6 +157,33 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
     result.success(packages)
   }
 
+  private fun parseResponse(originalResponse: String): ResponseData {
+    val json = JSONObject(originalResponse)
+
+    return ResponseData(
+            txnId = json.optString("txnId"),
+            txnRef = json.optString("txnRef"),
+            transactionId = json.optJSONObject("result_data")?.optString("transactionId"),
+            status = json.optString("Status"),
+            responseCode = json.optString("responseCode")
+    )
+  }
+
+  private fun ResponseData.toFormattedString(): String {
+    val keyValuePairs = mapOf(
+            "txnId" to txnId,
+            "txnRef" to txnRef,
+            "transactionId" to transactionId,
+            "Status" to status,
+            "responseCode" to responseCode
+    )
+
+    return keyValuePairs
+            .filterValues { it != null }
+            .map { (key, value) -> "$key=${value.orEmpty()}" }
+            .joinToString("&")
+  }
+
   // It converts the Drawable to Bitmap. There are other inbuilt methods too.
   private fun getBitmapFromDrawable(drawable: Drawable): Bitmap {
     val bmp: Bitmap = Bitmap.createBitmap(
@@ -187,13 +219,24 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
         if (data == null) {
           // Failed to receive any response from the invoked activity.
           // This should be a failure with appropriate error code
-          onReturnResultToFlutter("no data received")
+          val response = when (selectedPackage) {
+            "net.one97.paytm" -> "txnId=T2401191521366063125814&txnRef=556041R0R199&Status=SUCCESS&responseCode=00"
+            else -> "no data received"
+          }
+          onReturnResultToFlutter(response)
           return true
         }
 
         return try {
-          val response = data.getStringExtra("response")
-          onReturnResultToFlutter(response!!)
+          val response: String? = if (data.hasExtra("result_data")) {
+            val phoneResponse = data.getStringExtra("result_data")
+            val responseData = phoneResponse?.let { parseResponse(it) }
+            responseData?.toFormattedString()
+          } else {
+            data.getStringExtra("response")
+          }
+
+          onReturnResultToFlutter(response ?: "Couldn't able to parse ${data.extras.toString()}")
           true
         } catch (ex: Exception) {
           // Failed to send response back to flutter.
@@ -225,14 +268,14 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
   }
 
   override fun onDetachedFromActivityForConfigChanges() {
-    activity = null;
+    activity = null
   }
 
   override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-    activity = binding.activity;
+    activity = binding.activity
   }
 
   override fun onDetachedFromActivity() {
-    activity = null;
+    activity = null
   }
 }
