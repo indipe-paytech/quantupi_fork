@@ -216,7 +216,7 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
             // Create formatted string using bundle.keySet()
             val formattedString = buildString {
               for (key in data.extras!!.keySet()) {
-                if(key.toString()!="result_data") {
+                if(key.toString()!="result_data" && key.toString()!="txnId") {
                   append("$key=${data.extras!!.getString(key)}&")
                 }
               }
