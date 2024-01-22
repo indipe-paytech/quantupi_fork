@@ -19,6 +19,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.PluginRegistry.ActivityResultListener
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 
@@ -157,32 +158,6 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
     result.success(packages)
   }
 
-  private fun parseResponse(originalResponse: String): ResponseData {
-    val json = JSONObject(originalResponse)
-
-    return ResponseData(
-            txnId = json.optString("txnId"),
-            txnRef = json.optString("txnRef"),
-            transactionId = json.optJSONObject("result_data")?.optString("transactionId"),
-            status = json.optString("Status"),
-            responseCode = json.optString("responseCode")
-    )
-  }
-
-  private fun ResponseData.toFormattedString(): String {
-    val keyValuePairs = mapOf(
-            "txnId" to txnId,
-            "txnRef" to txnRef,
-            "transactionId" to transactionId,
-            "Status" to status,
-            "responseCode" to responseCode
-    )
-
-    return keyValuePairs
-            .filterValues { it != null }
-            .map { (key, value) -> "$key=${value.orEmpty()}" }
-            .joinToString("&")
-  }
 
   // It converts the Drawable to Bitmap. There are other inbuilt methods too.
   private fun getBitmapFromDrawable(drawable: Drawable): Bitmap {
@@ -228,12 +203,30 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
         }
 
         return try {
-          val response: String? = if (data.hasExtra("result_data")) {
-            val phoneResponse = data.getStringExtra("result_data")
-            val responseData = phoneResponse?.let { parseResponse(it) }
-            responseData?.toFormattedString()
+          val response: String?
+          if (data.hasExtra("result_data")) {
+            // Extract individual values from the bundle
+            val resultData = data.getStringExtra("result_data")
+            val transactionId = try {
+              resultData?.let { JSONObject(it).optString("transactionId") } ?: null
+            } catch (e: JSONException) {
+              Log.d("JSONException: ", e.toString())
+            }
+
+            // Create formatted string using bundle.keySet()
+            val formattedString = buildString {
+              for (key in data.extras!!.keySet()) {
+                if(key.toString()!="result_data") {
+                  append("$key=${data.extras!!.getString(key)}&")
+                }
+              }
+              // Append "transactionId" separately
+              append("txnId=$transactionId")
+            }
+            response = formattedString
+            Log.d("FormattedString", formattedString)
           } else {
-            data.getStringExtra("response")
+            response=data.getStringExtra("response")
           }
 
           onReturnResultToFlutter(response ?: "Couldn't able to parse ${data.extras.toString()}")
