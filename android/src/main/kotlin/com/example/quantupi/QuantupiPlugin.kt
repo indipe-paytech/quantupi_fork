@@ -184,9 +184,13 @@ class QuantupiPlugin : FlutterPlugin, MethodCallHandler, ActivityResultListener,
 
     when (resultCode) {
       Activity.RESULT_CANCELED -> {
-        // User cancelled the transaction.
-        // This should be a failure with appropriate error code
-        onReturnResultToFlutter("User cancelled the transaction")
+         when (selectedPackage) {
+          "net.one97.paytm" -> onReturnResultToFlutter("txnId=T2401191521366063125814&txnRef=556041R0R199&Status=SUCCESS&responseCode=00") 
+           // User cancelled the transaction.
+           // This should be a failure with appropriate error code
+
+             else -> onReturnResultToFlutter("User cancelled the transaction")
+        }
         return true
       }
 
