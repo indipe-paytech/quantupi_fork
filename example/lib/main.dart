@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:quantupi/quantupi.dart';
 import 'package:quantupi/quantupi_payment_apps.dart';
+import 'package:quantupi/upi_app_metadata.dart';
+import 'package:quantupi/upi_app_bundle.dart';
+import 'package:quantupi/upi_exception.dart';
 
 void main() => runApp(const MyApp());
 
@@ -18,18 +21,31 @@ class _MyAppState extends State<MyApp> {
   String data = 'Testing plugin';
 
   String appname = paymentappoptions[0];
-
+  late Quantupi upi;
+  List<String>? packNames = [
+    UpiAppBundle.bhim.androidPackageName,
+    UpiAppBundle.phonePe.androidPackageName,
+    UpiAppBundle.paytm.androidPackageName,
+    UpiAppBundle.phonePeSimulator.androidPackageName,
+  ];
   @override
   void initState() {
+    upi = Quantupi();
+    // getApps();
     super.initState();
   }
 
-  Future<String> initiateTransaction({QuantUPIPaymentApps? app}) async {
-    Quantupi upi = Quantupi(
-        url:
-            'upi://pay?pa=kawaldeepsingh25@oksbi&pn=Kawaldeep%20Singh&cu=INR&am=1&tn=testMoney');
+  getApps() async {
+    try {
+      await upi.getFilteredUpiApps(packNames);
+    } catch (err) {
+      print('err is $err');
+    }
+  }
 
-    String response = await upi.startTransaction();
+  Future<String> initiateTransaction(String? upiApp) async {
+    String response = await upi.startTransaction(upiApp!,
+        'upi://pay?pa=kawaldeepsingh25@oksbi&pn=Kawaldeep%20Singh&cu=INR&am=1&tn=testMoney');
 
     return response;
   }
@@ -79,26 +95,90 @@ class _MyAppState extends State<MyApp> {
                   }).toList(),
                 ),
               if (isios) const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  String value = await initiateTransaction(
-                    app: isios ? appoptiontoenum(appname) : null,
-                  );
-                  setState(() {
-                    data = value;
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: 15,
-                  ),
-                ),
-                child: const Text(
-                  "Tap to pay",
-                  style: TextStyle(fontSize: 20),
-                ),
+              Expanded(
+                child: FutureBuilder<List<UpiAppMetaData>>(
+                    future: upi.getFilteredUpiApps(packNames),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 8.0,
+                            mainAxisSpacing: 8.0,
+                          ),
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              onTap: () async {
+                                await initiateTransaction(
+                                    snapshot.data![index].app);
+                              },
+                              child: Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Image.memory(
+                                        snapshot.data![index].icon!,
+                                        width: 40,
+                                        height: 40,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        snapshot.data![index].name!,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        // Handle errors
+                        if (snapshot.error is UpiException) {
+                          // Display a specific message for NoFilteredUpiAppsException
+                          return Text(
+                              (snapshot.error as UpiException).message!);
+                        } else {
+                          // Display a generic error message for other exceptions
+                          return Text(
+                              'An unexpected error occurred: ${snapshot.error}');
+                        }
+                      }
+                      return Container();
+                    }),
               ),
+              // ElevatedButton(
+              //   onPressed: () async {
+              //     // String value = await initiateTransaction(
+              //     //   app: isios ? appoptiontoenum(appname) : null,
+              //     // );
+              //     // setState(() {
+              //     //   data = value;
+              //     // });
+              //   },
+              //   style: ElevatedButton.styleFrom(
+              //     padding: const EdgeInsets.symmetric(
+              //       horizontal: 30,
+              //       vertical: 15,
+              //     ),
+              //   ),
+              //   child: const Text(
+              //     "Tap to pay",
+              //     style: TextStyle(fontSize: 20),
+              //   ),
+              // ),
               const SizedBox(
                 height: 20,
               ),
