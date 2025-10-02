@@ -22,7 +22,7 @@ class Quantupi {
   }
 
   Future<String> startTransaction(
-    String packageName,
+    String? packageName,
     String url,
   ) async {
     try {
